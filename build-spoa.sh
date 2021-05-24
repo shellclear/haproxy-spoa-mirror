@@ -18,15 +18,6 @@ HAS_GIT="$(type "git" &> /dev/null && echo true || echo false)"
 HAS_DOCKER="$(type "docker" &> /dev/null && echo true || echo false)"
 URL_RELEASES="https://github.com/haproxytech/spoa-mirror.git"
 
-checkVersionAvailable() {
-    if [ "${HAS_CURL}" == "true" ]; then
-      NEW_VERSION=$(curl -Ls ${URL_RELEASES} | grep 'href="/helm/helm/releases/tag/v3.[0-9]*.[0-9]*\"' | grep -v no-underline | head -n 1 | cut -d '"' -f 2 | awk '{n=split($NF,a,"/");print a[n]}' | awk 'a !~ $0{print}; {a=$0}')
-    else [ "${HAS_WGET}" == "true" ]
-      NEW_VERSION=$(wget ${URL_RELEASES} -O - 2>&1 | grep 'href="/helm/helm/releases/tag/v3.[0-9]*.[0-9]*\"' | grep -v no-underline | head -n 1 | cut -d '"' -f 2 | awk '{n=split($NF,a,"/");print a[n]}' | awk 'a !~ $0{print}; {a=$0}')
-    fi
-    echo "${NEW_VERSION}"
-} 
-
 buildImage() {
     echo "🏃 Construindo imagem spoa-mirror a partir do repositorio oficial."
     docker build -t spoa-mirror https://github.com/haproxytech/spoa-mirror.git
