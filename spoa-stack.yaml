@@ -36,6 +36,8 @@ services:
         image: "spoa-mirror:latest"
         labels:
             localdomain.container.description: "Spoa-Mirror"
+        environment:
+            - URL=http://apache:80
         networks:
             haproxy-spoa-mirror:
                 aliases:
