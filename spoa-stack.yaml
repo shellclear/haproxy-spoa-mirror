@@ -1,0 +1,105 @@
+version: "3.8"
+
+services:
+
+    haproxy:
+        image: "haproxy:2.4"
+        user: "root:root"
+        labels:
+            localdomain.container.description: "HAPROXY"
+        networks:
+            haproxy-spoa-mirror:
+                aliases:
+                    - haproxy
+            nginx-backend:
+                aliases:
+                    - haproxy
+        ports:
+            - "${HAPROXY_PORT:-80}:80"
+        dns_search:
+            - "${DNS_SEARCH:-localdomain}"
+        deploy:
+            labels:
+                localdomain.service.description: "Load balancing and proxying for TCP and HTTP-based applications"
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "100k"
+                max-file: "3"
+        configs:          
+            - source: haproxy_cfg
+              target: /usr/local/etc/haproxy/haproxy.cfg 
+            - source: mirror_cfg
+              target: /usr/local/etc/haproxy/mirror.cfg
+
+    spoa-mirror:
+        image: "spoa-mirror:latest"
+        labels:
+            localdomain.container.description: "Spoa-Mirror"
+        networks:
+            haproxy-spoa-mirror:
+                aliases:
+                    - spoa-mirror
+            apache-backend:
+                aliases:
+                    - spoa-mirror
+        dns_search:
+            - "${DNS_SEARCH:-localdomain}"
+        deploy:
+            labels:                             
+                localdomain.service.description: "Replicating (mirroring) HTTP requests using the HAProxy SPOP"
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "100k"
+                max-file: "3"                    
+
+    nginx:
+        image: "nginx:${NGINX_VERSION:-stable-alpine}"
+        labels:
+            localdomain.container.description: "NGINX"
+        networks:
+            nginx-backend:
+                aliases:
+                    - nginx
+        dns_search:
+            - "${DNS_SEARCH:-localdomain}"
+        deploy:
+            labels:                             
+                localdomain.service.description: "Web server"                
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "100k"
+                max-file: "3"                        
+
+    apache:
+        image: "httpd:${APACHE_VERSION:-alpine}"
+        labels:
+            localdomain.container.description: "APACHE"
+        networks:
+            apache-backend:
+                aliases:
+                    - apache
+        dns_search:
+            - "${DNS_SEARCH:-localdomain}"
+        deploy:
+            labels:                                 
+                localdomain.service.description: "Web server"                    
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "100k"
+                max-file: "3"                 
+
+networks:
+    haproxy-spoa-mirror:
+    nginx-backend:
+    apache-backend:
+
+configs:
+    haproxy_cfg:
+        file: "./haproxy/conf/haproxy.cfg"
+    mirror_cfg:
+        file: "./haproxy/conf/mirror.cfg"
+
